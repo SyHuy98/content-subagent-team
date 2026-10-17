@@ -18,8 +18,11 @@ const task = {
   type: 'Chiến dịch trọn gói',
   service: 'Combo chăm sóc da',
   channels: ['Facebook', 'Instagram', 'Zalo OA'],
-  quantity: '3 bài + 2 quảng cáo',
+  quantity: '3 bài + 2 quảng cáo + 1 video',
   deadline: '',
+  video: { enabled: true, duration: 12, ratio: '9:16', style: 'motion' },
+  attachments: [],
+  useAds: true,
   brief: 'Bản demo: combo chăm sóc da mua 1 tặng 1 dịp 20/11.',
   createdAt: new Date().toISOString(),
   demo: true,
@@ -39,10 +42,15 @@ const script = [
   S(0, 'boss', 'assign', `Giao việc: ${task.title}`, { taskStatus: 'queued' }),
   S(2, 'manager', 'receiving', 'Nhận việc từ Sếp: Ưu đãi tri ân 20/11', { to: 'boss', taskStatus: 'in_progress' }),
   S(7, 'manager', 'working', 'Lên kế hoạch phân công'),
+  S(9, 'manager', 'consulting', 'Giao việc cho An: đọc số liệu Ads', { to: 'phan-tich' }),
   S(10, 'manager', 'consulting', 'Giao việc cho Dr. Linh: nền tảng chuyên môn', { to: 'chuyen-gia' }),
   S(14, 'manager', 'consulting', 'Giao việc cho Minh: chiến lược & lịch đăng', { to: 'chien-luoc' }),
   S(15, 'chuyen-gia', 'working', 'Nghiên cứu combo chăm sóc da & chống chỉ định'),
   S(17, 'chien-luoc', 'working', 'Phân tích khách hàng mục tiêu 20/11'),
+  S(13, 'phan-tich', 'working', 'Đọc số liệu Meta Ads 30 ngày'),
+  F(29, write('0-phan-tich.md')),
+  S(29, 'phan-tich', 'delivering', 'Gửi phân tích Ads cho Trưởng nhóm'),
+  S(33, 'phan-tich', 'done', 'Video dọc đang hiệu quả nhất'),
   S(19, 'manager', 'working', 'Theo dõi tiến độ vòng nền tảng'),
   S(25, 'chien-luoc', 'consulting', 'Hỏi Dr. Linh về nỗi lo của khách da nhạy cảm', { to: 'chuyen-gia' }),
   S(31, 'chien-luoc', 'working', 'Lên lịch đăng & bộ hashtag'),
@@ -65,6 +73,15 @@ const script = [
   F(73, write('4-designer.md')),
   S(73, 'designer', 'delivering', 'Gửi brief thiết kế cho Trưởng nhóm'),
   S(77, 'designer', 'done', 'Đã nộp brief'),
+  S(74, 'manager', 'consulting', 'Giao Tâm dựng video Reels 12 giây', { to: 'editor' }),
+  S(76, 'editor', 'working', 'Đọc kịch bản của Vy & storyboard của Khoa'),
+  S(79, 'editor', 'rendering', 'Đang xuất video 20%', { progress: 20 }),
+  S(81, 'editor', 'rendering', 'Đang xuất video 50%', { progress: 50 }),
+  S(83, 'editor', 'rendering', 'Đang xuất video 80%', { progress: 80 }),
+  S(85, 'editor', 'rendering', 'Xuất xong video', { progress: 100 }),
+  F(86, write('6-editor.md')),
+  S(86, 'editor', 'delivering', 'Gửi video cho Trưởng nhóm'),
+  S(90, 'editor', 'done', 'Đã nộp video'),
   S(78, 'manager', 'consulting', 'Nhờ Dr. Linh duyệt bài của Vy', { to: 'chuyen-gia' }),
   S(81, 'chuyen-gia', 'reviewing', 'Đang duyệt bài của Vy'),
   F(89, write('5-duyet.md')),
@@ -80,6 +97,7 @@ const script = [
   S(117, 'manager', 'done', 'Đã hoàn thành: Ưu đãi tri ân 20/11', { taskStatus: 'done' }),
 ];
 
+script.sort((a, b) => a.t - b.t);
 console.log(`🎬 Demo task ${id}. Mở http://localhost:3000 để xem (cần chạy npm start trước).`);
 const start = Date.now();
 for (const step of script) {

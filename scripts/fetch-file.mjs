@@ -16,7 +16,7 @@ let u;
 try { u = new URL(url); } catch { fail('Link không hợp lệ'); }
 if (u.protocol !== 'https:') fail('Chỉ nhận link https');
 
-const res = await fetch(u, { redirect: 'follow' });
+const res = await fetch(u, { redirect: 'follow' }).catch((e) => fail(`Không tải được: ${e.cause?.code || e.message}`));
 if (!res.ok || !res.body) fail(`Tải lỗi: HTTP ${res.status}`);
 const type = res.headers.get('content-type') || '';
 if (!/^(image|video)\//.test(type)) fail(`Không phải ảnh/video (content-type: ${type || 'không rõ'})`);

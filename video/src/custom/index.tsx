@@ -1,12 +1,12 @@
 // Composition riêng cho từng task (Tâm viết khi khung SpaMotion/ClipEdit không đủ).
-// Cách thêm: tạo file src/custom/<taskId>.tsx export một component, rồi khai báo ở mảng dưới:
+// KHÔNG sửa file này. Chỉ cần tạo file src/custom/<taskId>.tsx và export:
 //
-//   import { MyVideo } from './t20261017-xxxx';
-//   export const custom: CustomComposition[] = [
-//     { id: 'Custom-t20261017-xxxx', component: MyVideo, defaultProps: {}, width: 1080, height: 1920, fps: 30, durationInFrames: 600 },
-//   ];
+//   export const composition: CustomComposition = {
+//     id: 'Custom-<taskId>', component: MyVideo, defaultProps: {},
+//     width: 1080, height: 1920, fps: 30, durationInFrames: 360,
+//   };
 //
-// File src/custom/*.tsx (trừ index.tsx) không được đưa lên git.
+// File sẽ được tự động nhận diện. Các file src/custom/*.tsx (trừ index.tsx) không được đưa lên git.
 import type React from 'react';
 
 export type CustomComposition = {
@@ -20,4 +20,11 @@ export type CustomComposition = {
   durationInFrames?: number;
 };
 
-export const custom: CustomComposition[] = [];
+declare const require: { context: (dir: string, deep: boolean, re: RegExp) => { keys(): string[]; (k: string): any } };
+
+const files = require.context('./', false, /^\.\/(?!index\.)[^/]+\.tsx$/);
+
+export const custom: CustomComposition[] = files.keys().flatMap((k) => {
+  const c = files(k).composition as CustomComposition | undefined;
+  return c && c.id && c.component ? [c] : [];
+});

@@ -50,7 +50,9 @@ Xuất video: ghi props vào `workspace/outputs/<task>/video/props.json` rồi c
 - Video TikTok/Reels nên dài 15–30 giây.
 
 ## Composition riêng
-Nếu 2 khung trên không đủ, viết component mới ở `src/custom/<task>.tsx` và khai báo trong `src/custom/index.tsx` (có hướng dẫn trong file), rồi đặt `"composition": "Custom-<task>"` trong props.
+Nếu 2 khung trên không đủ, viết component mới ở `src/custom/<task>.tsx` và `export const composition = { id: 'Custom-<task>', component, defaultProps, width, height, fps, durationInFrames }`. File được tự động nhận diện, **không** cần sửa `src/custom/index.tsx`. Sau đó đặt `"composition": "Custom-<task>"` trong props.
+
+Nếu một file custom cũ bị lỗi làm mọi lần xuất video đều hỏng, hãy xoá file đó trong `src/custom/`.
 
 ## Xem trước / chỉnh tay
 ```bash
