@@ -2,7 +2,7 @@
 import { sprite } from './sprites.js';
 
 export const T = 16, COLS = 24, ROWS = 15, W = COLS * T, H = ROWS * T;
-export const ORDER = ['manager', 'chuyen-gia', 'chien-luoc', 'copywriter', 'designer'];
+export const ORDER = ['manager', 'chuyen-gia', 'chien-luoc', 'copywriter', 'designer', 'editor', 'phan-tich'];
 
 const DESKS = {
   manager:      { x: 9,  y: 4,  w: 3, seat: [10, 3] },
@@ -11,19 +11,22 @@ const DESKS = {
   'chien-luoc': { x: 7,  y: 8,  w: 3, seat: [8, 7] },
   copywriter:   { x: 2,  y: 12, w: 3, seat: [3, 11] },
   designer:     { x: 7,  y: 12, w: 3, seat: [8, 11] },
+  editor:       { x: 12, y: 8,  w: 3, seat: [13, 7] },
+  'phan-tich':  { x: 12, y: 12, w: 3, seat: [13, 11] },
 };
 
 const IDLE_SPOTS = [
   { at: [21, 10], face: 'up', say: '☕' }, { at: [22, 11], face: 'right', say: '💧' }, { at: [19, 12], face: 'down', say: '😌' },
-  { at: [13, 7], face: 'down', say: '🗒️' }, { at: [13, 10], face: 'up', say: '💭' }, { at: [1, 3], face: 'up', say: '📚' },
-  { at: [13, 3], face: 'up', say: '🖨️' }, { at: [6, 2], face: 'up', say: '🌤️' }, { at: [3, 2], face: 'up', say: '🌿' },
-  { at: [16, 12], face: 'left', say: '🌱' }, { at: [6, 5], face: 'down' }, { at: [14, 5], face: 'down' }, { at: [20, 11], face: 'up', say: '🍪' },
+  { at: [4, 3], face: 'down', say: '🗒️' }, { at: [4, 6], face: 'up', say: '💭' }, { at: [1, 3], face: 'up', say: '📚' },
+  { at: [13, 3], face: 'up', say: '🖨️' }, { at: [7, 2], face: 'up', say: '🌤️' }, { at: [3, 2], face: 'up', say: '🌿' },
+  { at: [16, 12], face: 'left', say: '🌱' }, { at: [7, 5], face: 'left' }, { at: [14, 5], face: 'down' }, { at: [20, 11], face: 'up', say: '🍪' },
+  { at: [16, 7], face: 'down' },
 ];
 
 // Nội thất chặn đường đi: [x, y, w, h]
 const BLOCKS = [
   [0, 2, 2, 1], [5, 2, 1, 1], [15, 2, 1, 1], [13, 2, 1, 1], [16, 2, 1, 3], [17, 2, 2, 1], [23, 2, 1, 1], [23, 7, 1, 1],
-  [12, 8, 3, 2], [11, 8, 1, 2], [15, 8, 1, 2], [19, 9, 4, 1], [23, 11, 1, 1], [18, 13, 3, 1], [0, 14, 1, 1], [23, 14, 1, 1],
+  [3, 4, 3, 2], [2, 4, 1, 2], [6, 4, 1, 2], [19, 9, 4, 1], [23, 11, 1, 1], [18, 13, 3, 1], [0, 14, 1, 1], [23, 14, 1, 1],
 ];
 
 const walk = Array.from({ length: ROWS }, (_, y) => Array.from({ length: COLS }, () => y >= 2));
@@ -61,7 +64,9 @@ function bfs(from, to) {
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-export const STATE_ICON = { idle: '', receiving: '📥', working: '⌨️', consulting: '💬', reviewing: '🔍', delivering: '📄', done: '✅', error: '⚠️', assign: '📝' };
+export const STATE_ICON = { idle: '', receiving: '📥', working: '⌨️', consulting: '💬', reviewing: '🔍', rendering: '🎬', publishing: '📤', delivering: '📄', done: '✅', error: '⚠️', assign: '📝' };
+const SEATED = ['working', 'reviewing', 'rendering', 'publishing', 'done', 'error'];
+const TYPING = ['working', 'reviewing', 'rendering', 'publishing'];
 
 // ---------------- Nhân vật ----------------
 class Agent {
@@ -87,7 +92,7 @@ class Agent {
   /** Đặt ngay vị trí theo trạng thái hiện tại (khi mới mở trang). */
   place(ev) {
     this.action = { ...ev };
-    if (['working', 'reviewing', 'done', 'error', 'receiving', 'consulting', 'delivering'].includes(ev.state)) {
+    if ([...SEATED, 'receiving', 'consulting', 'delivering'].includes(ev.state)) {
       [this.x, this.y] = this.seat;
       this.sit(ev.state);
       this.phase = 'stay'; this.timer = 0;
@@ -96,6 +101,12 @@ class Agent {
   }
 
   push(ev) {
+    // Cập nhật tiến độ cùng trạng thái (vd: xuất video 40% → 50%) thì không cần xếp hàng lại.
+    if (ev.state === this.action.state && SEATED.includes(ev.state) && this.phase === 'stay' && !this.queue.length) {
+      this.action = ev;
+      if (ev.msg) this.speak(ev.msg, 6);
+      return;
+    }
     this.queue.push(ev);
     if (this.queue.length > 4) this.queue.splice(0, this.queue.length - 4);
     const idle = this.phase.startsWith('wander') || this.phase === 'relax' || (this.phase === 'go' && (this.then === 'wander' || this.then === 'relax'));
@@ -127,7 +138,9 @@ class Agent {
 
   stand() { if (this.seated) { this.seated = false; this.typing = false; } }
 
-  sit(state) { this.seated = true; this.dir = 'down'; this.typing = state === 'working' || state === 'reviewing'; }
+  sit(state) { this.seated = true; this.dir = 'down'; this.typing = TYPING.includes(state); }
+
+  get progress() { return this.action.state === 'rendering' && this.action.progress != null ? this.action.progress : null; }
 
   goVisit(target, dwell) {
     if (!DESKS[target]) target = 'manager';
@@ -238,13 +251,13 @@ function drawBackground(g) {
   R(g, 17 * T, 2 * T, 7 * T, 6 * T, '#c9a3a6');
   for (let y = 2 * T; y < 8 * T; y += 4) for (let x = 17 * T + ((y / 4) % 2) * 2; x < 24 * T; x += 4) R(g, x, y, 1, 1, '#b98f93');
   R(g, 17 * T, 8 * T - 2, 7 * T, 2, '#a97b80');
-  // thảm phòng họp
-  R(g, 11 * T - 4, 7 * T - 2, 5 * T + 8, 4 * T + 4, '#e8d3b5'); R(g, 11 * T - 2, 7 * T, 5 * T + 4, 4 * T, '#f0e0c6');
+  // thảm phòng họp (góc trên trái)
+  R(g, 2 * T - 6, 3 * T + 4, 5 * T + 12, 3 * T + 4, '#e8d3b5'); R(g, 2 * T - 4, 3 * T + 6, 5 * T + 8, 3 * T, '#f0e0c6');
   // thảm lounge
   R(g, 17 * T, 10 * T, 7 * T, 5 * T, '#9fbd99'); R(g, 17 * T + 3, 10 * T + 3, 7 * T - 6, 5 * T - 6, '#b1cdaa');
   for (let x = 17 * T + 6; x < 24 * T - 6; x += 6) R(g, x, 10 * T + 5, 2, 1, '#9fbd99');
   // thảm khu làm việc
-  R(g, 1 * T - 4, 6 * T + 8, 10 * T + 8, 8 * T, 'rgba(255,255,255,.08)');
+  R(g, 1 * T - 4, 6 * T + 8, 15 * T + 8, 8 * T, 'rgba(255,255,255,.08)');
 
   // tường
   R(g, 0, 0, W, 2 * T, '#f1e6d8'); R(g, 0, 0, W, 3, '#dccab3');
@@ -292,7 +305,7 @@ function plant(g, tx, ty, big) {
   for (const [lx, ly] of leaves) { R(g, x + lx, y + ly + 2, 6, 5, '#5f9e74'); R(g, x + lx + 1, y + ly + 3, 3, 2, '#7cbd8f'); }
 }
 
-function desk(g, d, owner, typing) {
+function desk(g, d, owner, typing, progress) {
   const x = d.x * T, y = d.y * T, w = d.w * T;
   R(g, x, y - 5, w, 11, '#b07d55'); R(g, x, y - 5, w, 1, '#cf9c70'); R(g, x, y + 5, w, 1, '#94653f');
   R(g, x + 1, y + 6, w - 2, 8, '#8a5c3b'); R(g, x + w - 16, y + 8, 12, 4, '#7a4f31'); R(g, x + w - 11, y + 9, 2, 1, '#c9a96e');
@@ -321,6 +334,24 @@ function desk(g, d, owner, typing) {
     case 'designer':
       R(g, lx, y - 3, 12, 8, '#2d2d38'); R(g, lx + 1, y - 2, 10, 6, '#4a4a5c'); R(g, lx + 4, y - 1, 4, 1, '#6fae8a');
       for (let i = 0; i < 4; i++) R(g, rx + 3 + i * 2, y - 6, 1, 6, ['#e98aa6', '#6fae8a', '#6f9fd8', '#ffd166'][i]);
+      break;
+    case 'editor': {
+      for (const mx of [lx - 1, rx + 2]) {
+        R(g, mx, y - 13, 13, 10, '#24242e'); R(g, mx + 1, y - 12, 11, 7, '#3b3f58');
+        R(g, mx + 2, y - 10, 4, 1, '#e98aa6'); R(g, mx + 6, y - 10, 5, 1, '#6f9fd8'); R(g, mx + 2, y - 8, 7, 1, '#ffd166');
+        R(g, mx + 5, y - 3, 3, 2, '#24242e');
+      }
+      if (progress != null) {
+        R(g, x + 4, y + 8, w - 8, 4, '#2b1d14');
+        R(g, x + 5, y + 9, Math.round((w - 10) * progress / 100), 2, '#7cd99a');
+      }
+      break;
+    }
+    case 'phan-tich':
+      R(g, lx, y - 13, 13, 10, '#24242e'); R(g, lx + 1, y - 12, 11, 7, '#f4f7fb');
+      for (let i = 0; i < 4; i++) R(g, lx + 2 + i * 3, y - 6 - (i * 2 + 1), 2, i * 2 + 1, ['#6f9fd8', '#6fae8a', '#d97757', '#6fae8a'][i]);
+      R(g, lx + 5, y - 3, 3, 2, '#24242e');
+      R(g, rx + 1, y - 3, 11, 7, '#fffdf6'); R(g, rx + 3, y - 1, 7, 1, '#6f9fd8'); R(g, rx + 3, y + 1, 5, 1, '#d97757');
       break;
     case 'manager':
       R(g, lx, y - 2, 10, 6, '#fffdf6'); R(g, lx + 1, y - 3, 10, 6, '#fffdf6'); R(g, lx + 2, y - 1, 6, 1, '#bbb');
@@ -351,11 +382,11 @@ function chair(g, tile) {
 }
 
 function meetingTable(g) {
-  const x = 12 * T, y = 8 * T;
+  const x = 3 * T, y = 4 * T;
   R(g, x - 1, y - 3, 3 * T + 2, 2 * T, '#f6efe4'); R(g, x - 1, y - 3, 3 * T + 2, 1, '#fff');
   R(g, x - 1, y + 2 * T - 3, 3 * T + 2, 4, '#c9b79c');
   R(g, x + 8, y + 3, 10, 7, '#fffdf6'); R(g, x + 22, y + 9, 8, 6, '#ffe27a'); R(g, x + 34, y + 2, 5, 5, '#fff'); R(g, x + 35, y + 3, 3, 1, '#7a4a2a');
-  for (const [cx, cy] of [[11, 8], [11, 9], [15, 8], [15, 9]]) {
+  for (const [cx, cy] of [[2, 4], [2, 5], [6, 4], [6, 5]]) {
     R(g, cx * T + 4, cy * T + 3, 8, 10, '#8fb3a4'); R(g, cx * T + 4, cy * T + 12, 8, 2, '#6f9384');
   }
 }
@@ -495,13 +526,13 @@ export class Office {
     for (const [id, d] of Object.entries(DESKS)) {
       add(d.seat[1] * T + T - 1, () => chair(g, d.seat));
       const typing = id === 'boss' ? false : this.agents[id].seated && this.agents[id].typing;
-      add(d.y * T + T, () => { desk(g, d, id, typing); if (id === 'boss') reportStack(g, this.reports); });
+      add(d.y * T + T, () => { desk(g, d, id, typing, this.agents[id]?.progress); if (id === 'boss') reportStack(g, this.reports); });
     }
     add(2 * T + T, () => bookshelf(g, 0, 2, 2));
     add(2 * T + T, () => bookshelf(g, 17, 2, 2));
     add(2 * T + T, () => printer(g));
     for (const [x, y, big] of [[5, 2, 1], [15, 2, 0], [23, 2, 1], [23, 7, 0], [0, 14, 1], [23, 14, 1]]) add(y * T + T, () => plant(g, x, y, big));
-    add(9 * T + T, () => meetingTable(g));
+    add(5 * T + T, () => meetingTable(g));
     add(9 * T + T, () => counter(g, t));
     add(11 * T + T, () => cooler(g));
     add(13 * T + T, () => sofa(g));

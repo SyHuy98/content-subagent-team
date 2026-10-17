@@ -14,7 +14,7 @@
       <span class="logo">🌿</span>
       <div>
         <h1>Văn phòng Content Spa</h1>
-        <p>Team 4 chuyên gia AI + Trưởng nhóm Claude</p>
+        <p>Team 6 chuyên gia AI + Trưởng nhóm Claude</p>
       </div>
     </div>
     <div class="runner" id="runner">
@@ -41,13 +41,15 @@
     <aside class="panel">
       <nav class="tabs" role="tablist">
         <button class="tab active" data-tab="assign">📝 Giao việc</button>
-        <button class="tab" data-tab="tasks">📋 Công việc <span class="badge" id="taskBadge"></span></button>
+        <button class="tab" data-tab="tasks">📋 Việc <span class="badge" id="taskBadge"></span></button>
         <button class="tab" data-tab="reports">📄 Báo cáo</button>
-        <button class="tab" data-tab="brand">🏷️ Hồ sơ Spa</button>
+        <button class="tab" data-tab="assets">📁 Tư liệu</button>
+        <button class="tab" data-tab="brand">🏷️ Hồ sơ</button>
+        <button class="tab" data-tab="settings">⚙️ Cài đặt</button>
       </nav>
 
       <div class="tab-body active" id="tab-assign">
-        <p class="hint">Giao việc cho team. <b>Claude (Trưởng nhóm)</b> sẽ phân công cho 4 thành viên, tổng hợp kết quả rồi mang báo cáo tới bàn của bạn.</p>
+        <p class="hint">Giao việc cho team. <b>Claude (Trưởng nhóm)</b> sẽ phân công cho cả team, tổng hợp kết quả rồi mang báo cáo tới bàn của bạn.</p>
         <div class="presets" id="presets"></div>
         <form id="taskForm" class="form">
           <label>Tiêu đề công việc *
@@ -90,6 +92,37 @@
           <label>Brief chi tiết
             <textarea name="brief" rows="5" placeholder="Mục tiêu, ưu đãi, khách hàng mục tiêu, giọng văn, điều cần tránh…"></textarea>
           </label>
+          <fieldset class="box">
+            <legend><label class="inline"><input type="checkbox" name="videoEnabled"> 🎬 Cần video (Tâm dựng bằng Remotion)</label></legend>
+            <div id="videoFields" hidden>
+              <div class="row3">
+                <label>Thời lượng (giây)
+                  <input name="videoDuration" type="number" min="5" max="90" value="20">
+                </label>
+                <label>Khung hình
+                  <select name="videoRatio">
+                    <option value="9:16">9:16 – TikTok/Reels</option>
+                    <option value="4:5">4:5 – Feed</option>
+                    <option value="1:1">1:1 – Vuông</option>
+                    <option value="16:9">16:9 – YouTube</option>
+                  </select>
+                </label>
+                <label>Kiểu video
+                  <select name="videoStyle">
+                    <option value="auto">Tâm tự chọn</option>
+                    <option value="motion">Motion từ ảnh + chữ</option>
+                    <option value="clips">Ghép clip quay thật</option>
+                  </select>
+                </label>
+              </div>
+              <p class="muted" id="videoHint"></p>
+            </div>
+          </fieldset>
+          <fieldset class="box">
+            <legend>📎 Tư liệu đính kèm <span class="muted" id="pickCount"></span></legend>
+            <div class="picker" id="assetPicker"></div>
+          </fieldset>
+          <label class="inline"><input type="checkbox" name="useAds" checked> 📊 Cho An phân tích số liệu Meta Ads trước khi làm <span class="muted" id="adsHint"></span></label>
           <button class="btn primary" type="submit">🚀 Giao việc cho team</button>
         </form>
         <div class="notice" id="assignNotice" hidden></div>
@@ -108,7 +141,25 @@
           <button class="btn small" id="copyReport">📋 Copy</button>
           <button class="btn small" id="downloadReport">⬇️ Tải .md</button>
         </div>
+        <section class="media-box" id="mediaBox" hidden></section>
+        <section class="publish-box" id="publishBox" hidden>
+          <div class="card-head"><h2>📤 Đăng bài</h2><button class="btn small" id="publishOpen">Chuẩn bị đăng</button></div>
+          <p class="muted" id="publishHint"></p>
+          <div class="form publish-form" id="publishForm" hidden></div>
+          <ul class="pubs" id="publishList"></ul>
+        </section>
         <article class="md" id="report"><p class="muted">Chưa có báo cáo. Hãy giao việc cho team trước nhé!</p></article>
+      </div>
+
+      <div class="tab-body" id="tab-assets">
+        <p class="hint">Ảnh, clip quay ở spa, logo, nhạc nền… Cả team dùng chung; Tâm lấy để dựng video. Gắn thẻ <b>logo</b> hoặc <b>nhạc</b> để team tự dùng cho mọi video.</p>
+        <label class="drop" id="dropZone">
+          <input type="file" id="fileInput" multiple accept="image/*,video/*,audio/*" hidden>
+          <span>⬆️ Kéo-thả file vào đây hoặc <u>bấm để chọn</u></span>
+          <small class="muted">Ảnh, video, nhạc · tối đa 500MB/file</small>
+        </label>
+        <div id="uploads"></div>
+        <div class="asset-grid" id="assetGrid"></div>
       </div>
 
       <div class="tab-body" id="tab-brand">
@@ -116,6 +167,29 @@
         <textarea id="brand" class="brand-editor" spellcheck="false"></textarea>
         <button class="btn primary" id="saveBrand">💾 Lưu hồ sơ</button>
         <span class="muted" id="brandSaved"></span>
+      </div>
+
+      <div class="tab-body" id="tab-settings">
+        <p class="hint">Lần đầu (hoặc khi thêm connector mới): mở Claude Code trong thư mục dự án và chạy <code>/setup-team</code> <button class="btn small" id="copySetup">Copy</button>. Claude sẽ tự tìm skill Remotion, dò connector và cấp quyền phù hợp.</p>
+        <ul class="caps" id="capList"></ul>
+        <div class="form">
+          <label>Thư mục Remotion (skill hoặc project)
+            <input id="cfgRemotion" placeholder="E:\remotion">
+          </label>
+          <div class="row3">
+            <label>Tài khoản quảng cáo
+              <input id="cfgAdAccount" placeholder="act_123…">
+            </label>
+            <label>Facebook Page ID
+              <input id="cfgPage">
+            </label>
+            <label>Instagram ID
+              <input id="cfgIg">
+            </label>
+          </div>
+          <button class="btn primary" id="saveConfig" type="button">💾 Lưu cài đặt</button>
+          <p class="muted">Đăng bài luôn cần bạn bấm <b>Duyệt & đăng</b> trong tab Báo cáo – team không bao giờ tự đăng.</p>
+        </div>
       </div>
     </aside>
   </main>

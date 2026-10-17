@@ -7,6 +7,8 @@ export const LOOKS = {
   'chien-luoc': { skin: '#e8b98f', hair: '#2a2422', style: 'short', shirt: '#3e5c94', shade: '#2d4473', pants: '#2b2b35', shoes: '#1a1a1a', acc: 'glasses' },
   copywriter:   { skin: '#f7d4b8', hair: '#7a4a2a', style: 'bun',   shirt: '#e98aa6', shade: '#c96886', pants: '#efe2d2', shoes: '#8a5a44', acc: null },
   designer:     { skin: '#dcae86', hair: '#2b2b2b', style: 'short', shirt: '#6fae8a', shade: '#4f8a6a', pants: '#3a3550', shoes: '#202020', acc: 'beret' },
+  editor:       { skin: '#e9bf96', hair: '#1e1a18', style: 'short', shirt: '#e0b04a', shade: '#bf9233', pants: '#2c2f3a', shoes: '#151515', acc: 'cap' },
+  'phan-tich':  { skin: '#f1cba9', hair: '#4a2f22', style: 'long',  shirt: '#3fa7a0', shade: '#2f817b', pants: '#ece3d6', shoes: '#6b4a3a', acc: 'glasses' },
   boss:         { skin: '#f3cfb0', hair: '#2b1d18', style: 'long',  shirt: '#33313f', shade: '#23222c', pants: '#33313f', shoes: '#111', acc: 'necklace' },
 };
 
@@ -57,6 +59,7 @@ function drawFront(g, L, o) {
   if (L.acc === 'glasses') { p(5, 6, 6, 1, '#1d1d1d'); p(6, 6, 1, 1, '#9fd0ff'); p(9, 6, 1, 1, '#9fd0ff'); }
   if (L.acc === 'beret') { p(4, 1, 8, 2, '#7b4fa0'); p(3, 2, 1, 1, '#7b4fa0'); p(9, 0, 2, 1, '#7b4fa0'); }
   if (L.acc === 'headset') { p(4, 1, 8, 1, '#2d2d2d'); p(3, 4, 1, 3, '#2d2d2d'); p(12, 4, 1, 3, '#2d2d2d'); p(11, 8, 2, 1, '#2d2d2d'); }
+  if (L.acc === 'cap') { p(5, 0, 6, 1, '#c94f4f'); p(4, 1, 8, 3, '#c94f4f'); p(7, 1, 2, 1, '#e8e8e8'); }
 }
 
 function drawBack(g, L, o) {
@@ -75,6 +78,7 @@ function drawBack(g, L, o) {
   if (L.style === 'bun') { p(6, -1, 4, 2, L.hair); p(7, -2, 2, 1, L.hair); }
   if (L.acc === 'beret') { p(4, 1, 8, 2, '#7b4fa0'); p(9, 0, 2, 1, '#7b4fa0'); }
   if (L.acc === 'headset') { p(4, 1, 8, 1, '#2d2d2d'); p(3, 4, 1, 3, '#2d2d2d'); p(12, 4, 1, 3, '#2d2d2d'); }
+  if (L.acc === 'cap') { p(5, 0, 6, 1, '#c94f4f'); p(4, 1, 8, 3, '#c94f4f'); p(5, 4, 6, 1, '#a33c3c'); }
 }
 
 function drawSide(g, L, o) {
@@ -105,6 +109,7 @@ function drawSide(g, L, o) {
   if (L.acc === 'glasses') { p(8, 6, 4, 1, '#1d1d1d'); p(10, 6, 1, 1, '#9fd0ff'); }
   if (L.acc === 'beret') { p(4, 1, 8, 2, '#7b4fa0'); p(11, 2, 1, 1, '#7b4fa0'); }
   if (L.acc === 'headset') { p(5, 1, 6, 1, '#2d2d2d'); p(6, 5, 2, 3, '#2d2d2d'); p(8, 8, 3, 1, '#2d2d2d'); }
+  if (L.acc === 'cap') { p(5, 0, 6, 1, '#c94f4f'); p(4, 1, 8, 3, '#c94f4f'); p(2, 3, 3, 1, '#a33c3c'); }
 }
 
 const cache = new Map();

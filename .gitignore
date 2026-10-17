@@ -4,5 +4,12 @@ workspace/state/*
 workspace/logs/*
 workspace/inbox/*
 workspace/outputs/*
-!workspace/**/.gitkeep
 .claude/settings.local.json
+workspace/assets/*
+workspace/publish/*
+workspace/config.json
+video/node_modules/
+video/out/
+video/src/custom/*.tsx
+!video/src/custom/index.tsx
+!workspace/**/.gitkeep

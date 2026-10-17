@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Báo trạng thái lên văn phòng pixel.
 // Cách dùng:
-//   node scripts/status.mjs <agent> <state> "<lời nhắn>" [--task <id>] [--to <agent>] [--task-status <status>]
-// agent: manager | chuyen-gia | chien-luoc | copywriter | designer
-// state: idle | receiving | working | consulting | reviewing | delivering | done | error
+//   node scripts/status.mjs <agent> <state> "<lời nhắn>" [--task <id>] [--to <agent>] [--task-status <status>] [--progress <0-100>]
+// agent: manager | chuyen-gia | chien-luoc | copywriter | designer | editor | phan-tich
+// state: idle | receiving | working | consulting | reviewing | rendering | publishing | delivering | done | error
 import { AGENTS, AGENT_STATES, TASK_STATUSES, appendEvent } from './lib/store.mjs';
 
 const args = process.argv.slice(2);
@@ -30,5 +30,6 @@ const ev = { agent, state, msg: rest.join(' ').slice(0, 280) };
 if (flags.task) ev.task = flags.task;
 if (flags.to) ev.to = flags.to;
 if (flags['task-status']) ev.taskStatus = flags['task-status'];
+if (flags.progress !== undefined) ev.progress = Math.max(0, Math.min(100, Number(flags.progress) || 0));
 appendEvent(ev);
 console.log(`✓ ${AGENTS[agent].name}: ${state}${ev.msg ? ' – ' + ev.msg : ''}`);

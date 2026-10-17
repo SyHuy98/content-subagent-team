@@ -1,5 +1,10 @@
 import { Office, ORDER, STATE_ICON } from './office.js';
 import { portrait, LOOKS } from './sprites.js';
+import { $, $$, esc, fmtTime, fmtDate, api, copy, toast } from './util.js';
+import { markdown } from './markdown.js';
+import { initAssets, setAssets, pickedAssets, clearPicked } from './assets-ui.js';
+import { initSettings, renderSettings, loadSettings } from './settings-ui.js';
+import { initPublish, renderPublish, renderMedia } from './publish-ui.js';
 
 const TEAM = {
   manager:      { name: 'Claude',   role: 'Trưởng nhóm' },
@@ -7,30 +12,28 @@ const TEAM = {
   'chien-luoc': { name: 'Minh',     role: 'Chiến lược Content & SEO' },
   copywriter:   { name: 'Vy',       role: 'Copywriter' },
   designer:     { name: 'Khoa',     role: 'Designer' },
+  editor:       { name: 'Tâm',      role: 'Video Editor (Remotion)' },
+  'phan-tich':  { name: 'An',       role: 'Phân tích Ads (Meta)' },
   boss:         { name: 'Sếp (Bạn)', role: '' },
 };
 const STATE_LABEL = {
   idle: 'Rảnh', receiving: 'Nhận việc', working: 'Đang làm', consulting: 'Trao đổi', reviewing: 'Đang duyệt',
-  delivering: 'Nộp bài', done: 'Hoàn thành', error: 'Gặp lỗi', assign: 'Giao việc',
+  rendering: 'Xuất video', publishing: 'Đăng bài', delivering: 'Nộp bài', done: 'Hoàn thành', error: 'Gặp lỗi', assign: 'Giao việc',
 };
 const TASK_LABEL = { queued: 'Đang chờ', in_progress: 'Đang làm', done: 'Hoàn thành', error: 'Lỗi' };
 const FILE_LABEL = {
-  'final.md': '⭐ Báo cáo tổng', '1-chuyen-gia.md': '🩺 Dr. Linh', '2-chien-luoc.md': '📊 Minh',
-  '3-copywriter.md': '✍️ Vy', '4-designer.md': '🎨 Khoa', '5-duyet.md': '✅ Duyệt',
+  'final.md': '⭐ Báo cáo tổng', '0-phan-tich.md': '📈 An', '1-chuyen-gia.md': '🩺 Dr. Linh', '2-chien-luoc.md': '📊 Minh',
+  '3-copywriter.md': '✍️ Vy', '4-designer.md': '🎨 Khoa', '5-duyet.md': '✅ Duyệt', '6-editor.md': '🎬 Tâm',
 };
 const PRESETS = [
-  { label: '🎉 Khai trương', title: 'Chiến dịch khai trương spa', type: 'Chiến dịch trọn gói', service: 'Toàn bộ dịch vụ', quantity: '5 bài + 3 quảng cáo', brief: 'Khai trương chi nhánh mới, ưu đãi 50% liệu trình đầu tiên trong 7 ngày, tặng quà cho 100 khách đầu tiên.' },
+  { label: '🎉 Khai trương', title: 'Chiến dịch khai trương spa', type: 'Chiến dịch trọn gói', service: 'Toàn bộ dịch vụ', quantity: '5 bài + 3 quảng cáo + 1 video', brief: 'Khai trương chi nhánh mới, ưu đãi 50% liệu trình đầu tiên trong 7 ngày, tặng quà cho 100 khách đầu tiên.', video: true },
   { label: '💐 Ưu đãi 20/11', title: 'Ưu đãi tri ân 20/11', type: 'Bài đăng mạng xã hội', service: 'Combo chăm sóc da', quantity: '3 bài', brief: 'Combo chăm sóc da tri ân thầy cô, mua 1 tặng 1 cho người thân. Giọng ấm áp, tinh tế.' },
   { label: '🧴 Trị mụn', title: 'Series kiến thức trị mụn', type: 'Lịch content tháng', service: 'Trị mụn chuẩn y khoa', quantity: '8 bài/tháng', brief: 'Xây dựng niềm tin bằng kiến thức. Khách hàng là sinh viên, nhân viên văn phòng 20–30 tuổi bị mụn nội tiết.' },
+  { label: '🎬 Video TikTok', title: 'Video TikTok giới thiệu massage đá nóng', type: 'Video ngắn TikTok/Reels', service: 'Massage body đá nóng', quantity: '1 video 20 giây + caption', brief: 'Video dọc 9:16 cho TikTok và Reels: hook 2 giây đầu, quy trình 3 bước, ưu đãi và CTA đặt lịch. Dùng clip quay thật nếu có.', video: true },
   { label: '✨ Triệt lông', title: 'Quảng cáo triệt lông mùa hè', type: 'Quảng cáo Meta (Facebook/Instagram)', service: 'Triệt lông diode laser', quantity: '4 phiên bản A/B', brief: 'Mùa hè, khách nữ 20–35 tuổi. Nhấn mạnh công nghệ, cảm giác dễ chịu, quy trình an toàn. Ưu đãi gói 6 buổi.' },
 ];
 
-const $ = (s, el = document) => el.querySelector(s);
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const fmtTime = (ts) => ts ? new Date(ts).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
-const fmtDate = (ts) => ts ? new Date(ts).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : '';
-
-const store = { agents: {}, tasks: [], events: [], runner: {} };
+const store = { agents: {}, tasks: [], events: [], runner: {}, capabilities: {}, assets: [], publish: [] };
 const office = new Office($('#canvas'), $('#overlay'), Object.fromEntries(Object.entries(TEAM).map(([k, v]) => [k, v.name])));
 let selected = null;
 
@@ -40,8 +43,7 @@ for (const id of ORDER) {
   const el = document.createElement('div');
   el.className = 'member';
   el.dataset.id = id;
-  const pic = portrait(id, 3);
-  el.append(pic);
+  el.append(portrait(id, 3));
   el.insertAdjacentHTML('beforeend', `<div class="info"><b>${TEAM[id].name}</b><span class="role">${TEAM[id].role}</span><span class="state">Rảnh</span><div class="msg"></div></div>`);
   el.addEventListener('click', () => select(id));
   teamEl.append(el);
@@ -55,12 +57,17 @@ function select(id) {
 }
 
 function renderTeam() {
+  const caps = store.capabilities || {};
   for (const el of teamEl.children) {
-    const a = store.agents[el.dataset.id] || {};
+    const id = el.dataset.id;
+    const a = store.agents[id] || {};
     const st = $('.state', el);
     st.className = `state ${a.state || 'idle'}`;
-    st.textContent = `${STATE_ICON[a.state] || ''} ${STATE_LABEL[a.state] || 'Rảnh'}`.trim();
-    $('.msg', el).textContent = a.msg || '';
+    const pct = a.state === 'rendering' && a.progress != null ? ` ${a.progress}%` : '';
+    st.textContent = `${STATE_ICON[a.state] || ''} ${STATE_LABEL[a.state] || 'Rảnh'}${pct}`.trim();
+    const off = (id === 'phan-tich' && !caps.ads) || (id === 'editor' && !caps.video);
+    el.classList.toggle('offline', !!off && (!a.state || a.state === 'idle'));
+    $('.msg', el).textContent = a.msg || (off ? (id === 'editor' ? 'Chưa cài Remotion – xem ⚙️ Cài đặt' : 'Chưa kết nối Meta Ads – xem ⚙️ Cài đặt') : '');
   }
 }
 
@@ -85,12 +92,14 @@ function renderRunner() {
   auto.checked = !!r.autoRun;
   auto.disabled = !r.claudeAvailable;
   if (!r.claudeAvailable) { el.classList.add('off'); $('#runnerText').textContent = 'Chưa thấy Claude Code CLI · chạy /team thủ công'; }
-  else if (r.current) { el.classList.add('busy'); $('#runnerText').textContent = `Team đang làm việc${r.queue?.length ? ` · ${r.queue.length} việc chờ` : ''}`; }
-  else { el.classList.add('ok'); $('#runnerText').textContent = 'Claude Code sẵn sàng'; }
+  else if (r.current) {
+    el.classList.add('busy');
+    $('#runnerText').textContent = `${r.current.kind === 'publish' ? 'Đang đăng bài' : 'Team đang làm việc'}${r.queue?.length ? ` · ${r.queue.length} việc chờ` : ''}`;
+  } else { el.classList.add('ok'); $('#runnerText').textContent = 'Claude Code sẵn sàng'; }
 }
 $('#autoRun').addEventListener('change', async (e) => {
-  const r = await api('/api/runner', { method: 'POST', body: { autoRun: e.target.checked } });
-  store.runner = r; renderRunner();
+  store.runner = await api('/api/runner', { method: 'POST', body: { autoRun: e.target.checked } });
+  renderRunner();
 });
 
 // ---------- Tasks ----------
@@ -99,14 +108,17 @@ function renderTasks() {
   const active = tasks.filter((t) => t.status === 'queued' || t.status === 'in_progress').length;
   $('#taskBadge').textContent = active || '';
   const r = store.runner || {};
+  const isTeam = (j, id) => j?.kind === 'team' && j.id === id;
   $('#tasks').innerHTML = tasks.map((t) => {
-    const running = r.current?.id === t.id;
-    const canRun = r.claudeAvailable && !running && t.status !== 'in_progress' && !(r.queue || []).includes(t.id);
+    const running = isTeam(r.current, t.id);
+    const canRun = r.claudeAvailable && !running && t.status !== 'in_progress' && !(r.queue || []).some((j) => isTeam(j, t.id));
+    const extras = [t.video?.enabled ? `🎬 Video ${t.video.duration}s ${t.video.ratio}` : '', t.attachments?.length ? `📎 ${t.attachments.length} tư liệu` : ''].filter(Boolean).join(' · ');
     return `<li class="task">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:start">
         <h3>${esc(t.title)}</h3><span class="pill ${t.status}">${TASK_LABEL[t.status] || t.status}</span>
       </div>
       <div class="meta">${esc(t.type || '')}${t.service ? ' · ' + esc(t.service) : ''}${t.channels?.length ? ' · ' + esc(t.channels.join(', ')) : ''}</div>
+      ${extras ? `<div class="meta">${extras}</div>` : ''}
       <div class="meta">Giao lúc ${fmtDate(t.createdAt)} · cập nhật ${fmtDate(t.updatedAt)}</div>
       <div class="actions">
         ${t.hasFinal || t.status !== 'queued' ? `<button class="btn small" data-act="view" data-id="${t.id}">📄 Xem báo cáo</button>` : ''}
@@ -122,7 +134,7 @@ $('#tasks').addEventListener('click', async (e) => {
   const b = e.target.closest('button[data-act]');
   if (!b) return;
   const id = b.dataset.id;
-  if (b.dataset.act === 'view') { openReport(id); }
+  if (b.dataset.act === 'view') openReport(id);
   if (b.dataset.act === 'run') { try { await api(`/api/tasks/${id}/run`, { method: 'POST' }); toast('Đã gọi team vào làm việc!'); } catch (err) { toast(err.message); } }
   if (b.dataset.act === 'copy') { await copy(`/team ${id}`); toast(`Đã copy “/team ${id}”. Dán vào Claude Code để chạy.`); }
   if (b.dataset.act === 'del' && confirm('Xoá công việc này khỏi danh sách? (File báo cáo vẫn được giữ)')) {
@@ -131,7 +143,7 @@ $('#tasks').addEventListener('click', async (e) => {
 });
 
 // ---------- Reports ----------
-let report = { id: null, files: [], current: null };
+let report = { id: null, files: [], media: [], current: null };
 function renderReportSelect() {
   const sel = $('#reportTask');
   const tasks = [...store.tasks].reverse().filter((t) => t.status !== 'queued' || t.hasFinal);
@@ -147,10 +159,11 @@ async function openReport(id, switchTab = true) {
   if (switchTab) showTab('reports');
   const data = await api(`/api/outputs/${id}`);
   const prev = report.id === id ? report.current : null;
-  report = { id, files: data.files, current: null };
+  report = { id, files: data.files, media: data.media, task: data.task, current: null };
   $('#reportTask').value = id;
-  const fileTabs = $('#fileTabs');
-  fileTabs.innerHTML = data.files.map((f) => `<button class="file-tab" data-name="${f.name}">${FILE_LABEL[f.name] || f.name}</button>`).join('');
+  $('#fileTabs').innerHTML = data.files.map((f) => `<button class="file-tab" data-name="${f.name}">${FILE_LABEL[f.name] || f.name}</button>`).join('');
+  renderMedia(data.media);
+  renderPublish({ task: data.task, files: data.files, media: data.media, requests: store.publish, caps: store.capabilities, assets: store.assets });
   if (!data.files.length) {
     $('#report').innerHTML = '<p class="muted">Team đang làm việc, chưa có file nào. Báo cáo sẽ tự hiện khi xong.</p>';
     $('#reportActions').hidden = true;
@@ -189,16 +202,36 @@ $('#presets').addEventListener('click', (e) => {
   if (!b) return;
   const p = PRESETS[b.dataset.i];
   for (const k of ['title', 'type', 'service', 'quantity', 'brief']) form.elements[k].value = p[k];
+  form.elements.videoEnabled.checked = !!p.video;
+  syncVideoFields();
 });
+function syncVideoFields() { $('#videoFields').hidden = !form.elements.videoEnabled.checked; }
+form.elements.videoEnabled.addEventListener('change', syncVideoFields);
+
+function renderAssignCaps() {
+  const caps = store.capabilities || {};
+  form.elements.useAds.disabled = !caps.ads;
+  $('#adsHint').textContent = caps.ads ? '' : '(chưa kết nối Meta Ads)';
+  $('#videoHint').textContent = caps.video ? '' : '⚠️ Chưa cài Remotion – Tâm sẽ chỉ chuẩn bị kịch bản & props, chưa xuất được file video. Xem tab ⚙️ Cài đặt.';
+}
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const body = Object.fromEntries(new FormData(form));
-  body.channels = [...$('#channels').querySelectorAll('input:checked')].map((i) => i.value);
+  const f = form.elements;
+  const body = {
+    title: f.title.value, type: f.type.value, service: f.service.value, quantity: f.quantity.value, deadline: f.deadline.value, brief: f.brief.value,
+    channels: $$('#channels input:checked').map((i) => i.value),
+    attachments: pickedAssets(),
+    video: { enabled: f.videoEnabled.checked, duration: f.videoDuration.value, ratio: f.videoRatio.value, style: f.videoStyle.value },
+    useAds: f.useAds.checked,
+  };
   const btn = form.querySelector('button[type=submit]');
   btn.disabled = true;
   try {
     const { task, runner } = await api('/api/tasks', { method: 'POST', body });
     form.reset();
+    clearPicked();
+    syncVideoFields();
     const n = $('#assignNotice');
     n.hidden = false;
     n.innerHTML = runner.claudeAvailable && runner.autoRun
@@ -221,17 +254,31 @@ $('#saveBrand').addEventListener('click', async () => {
 
 // ---------- Tabs ----------
 function showTab(name) {
-  for (const t of document.querySelectorAll('.tab')) t.classList.toggle('active', t.dataset.tab === name);
-  for (const b of document.querySelectorAll('.tab-body')) b.classList.toggle('active', b.id === `tab-${name}`);
+  for (const t of $$('.tab')) t.classList.toggle('active', t.dataset.tab === name);
+  for (const b of $$('.tab-body')) b.classList.toggle('active', b.id === `tab-${name}`);
   if (name === 'brand') loadBrand();
+  if (name === 'settings') loadSettings().then(setCaps).catch(() => {});
 }
-for (const t of document.querySelectorAll('.tab')) t.addEventListener('click', () => showTab(t.dataset.tab));
+for (const t of $$('.tab')) t.addEventListener('click', () => showTab(t.dataset.tab));
+
+function setCaps(caps) {
+  store.capabilities = caps;
+  renderSettings(caps);
+  renderAssignCaps();
+  renderTeam();
+}
+
+initAssets();
+initSettings(setCaps);
+initPublish();
 
 // ---------- Live updates ----------
 function applySnapshot(s) {
-  Object.assign(store, { agents: s.agents, tasks: s.tasks, events: s.events, runner: s.runner });
+  Object.assign(store, s);
   office.init(s.agents, s.tasks.filter((t) => t.status === 'done').length);
-  renderTeam(); renderLog(); renderTasks(); renderRunner();
+  setAssets(s.assets);
+  setCaps(s.capabilities);
+  renderLog(); renderTasks(); renderRunner();
 }
 
 function connect() {
@@ -242,7 +289,7 @@ function connect() {
     const ev = JSON.parse(m.data);
     store.events.push(ev);
     if (store.events.length > 300) store.events.splice(0, store.events.length - 300);
-    if (store.agents[ev.agent]) Object.assign(store.agents[ev.agent], { state: ev.state, msg: ev.msg || '', task: ev.task, ts: ev.ts });
+    if (store.agents[ev.agent]) Object.assign(store.agents[ev.agent], { state: ev.state, msg: ev.msg || '', task: ev.task, progress: ev.progress ?? null, ts: ev.ts });
     office.handle(ev);
     renderTeam(); renderLog(1);
     if (ev.agent === 'manager' && ev.taskStatus === 'done') {
@@ -252,90 +299,20 @@ function connect() {
   });
   es.addEventListener('tasks', (m) => { store.tasks = JSON.parse(m.data); renderTasks(); });
   es.addEventListener('runner', (m) => { store.runner = JSON.parse(m.data); renderRunner(); renderTasks(); });
+  es.addEventListener('assets', (m) => { store.assets = JSON.parse(m.data); setAssets(store.assets); });
+  es.addEventListener('capabilities', (m) => setCaps(JSON.parse(m.data)));
+  es.addEventListener('publish', (m) => {
+    const prev = new Map(store.publish.map((r) => [r.id, r.status]));
+    store.publish = JSON.parse(m.data);
+    for (const r of store.publish) {
+      if (r.status === 'published' && prev.get(r.id) !== 'published') toast('🎉 Bài đã được đăng!', r.result?.url ? 'Mở bài' : null, () => window.open(r.result.url, '_blank'));
+      if (r.status === 'failed' && prev.get(r.id) !== 'failed') toast(`⚠️ Đăng bài lỗi: ${r.result?.error || ''}`);
+    }
+    if (report.id) renderPublish({ requests: store.publish, caps: store.capabilities, assets: store.assets });
+  });
   es.onerror = () => { $('#runnerText').textContent = 'Mất kết nối server… đang thử lại'; $('#runner').className = 'runner off'; };
 }
 
 async function refresh() { applySnapshot(await api('/api/state')); }
-
-// ---------- Helpers ----------
-async function api(url, opts = {}) {
-  const res = await fetch(url, {
-    method: opts.method || 'GET',
-    headers: opts.body ? { 'Content-Type': 'application/json' } : undefined,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Lỗi ${res.status}`);
-  return data;
-}
-
-async function copy(text) {
-  try { await navigator.clipboard.writeText(text); }
-  catch {
-    const ta = document.createElement('textarea'); ta.value = text; document.body.append(ta); ta.select();
-    document.execCommand('copy'); ta.remove();
-  }
-}
-
-let toastTimer;
-function toast(msg, action, fn) {
-  const t = $('#toast');
-  t.innerHTML = `<span>${esc(msg)}</span>${action ? `<button>${esc(action)}</button>` : ''}`;
-  t.hidden = false;
-  if (action) t.querySelector('button').onclick = () => { fn(); t.hidden = true; };
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (t.hidden = true), action ? 10000 : 3500);
-}
-
-// Markdown tối giản: tiêu đề, đậm/nghiêng, danh sách, bảng, trích dẫn, code.
-function markdown(src) {
-  const inline = (s) => esc(s)
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
-    .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<i>$2</i>')
-    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, t, u) => /^(https?:|\.|\/|#)/.test(u) ? `<a href="${u}" target="_blank" rel="noopener">${t}</a>` : t);
-  const lines = src.replace(/\r/g, '').split('\n');
-  const out = [];
-  let i = 0;
-  while (i < lines.length) {
-    const l = lines[i];
-    if (/^```/.test(l)) {
-      const buf = []; i++;
-      while (i < lines.length && !/^```/.test(lines[i])) buf.push(lines[i++]);
-      i++; out.push(`<pre><code>${esc(buf.join('\n'))}</code></pre>`); continue;
-    }
-    let m;
-    if ((m = l.match(/^(#{1,4})\s+(.*)/))) { const n = Math.min(m[1].length, 3); out.push(`<h${n}>${inline(m[2])}</h${n}>`); i++; continue; }
-    if (/^\s*(?:(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,})$/.test(l)) { out.push('<hr>'); i++; continue; }
-    if (/^\s*\|.*\|\s*$/.test(l) && i + 1 < lines.length && /^\s*\|?\s*:?-{2,}/.test(lines[i + 1])) {
-      const row = (r) => r.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
-      const head = row(l); i += 2;
-      const body = [];
-      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) body.push(row(lines[i++]));
-      out.push(`<table><thead><tr>${head.map((c) => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
-      continue;
-    }
-    if (/^>\s?/.test(l)) {
-      const buf = [];
-      while (i < lines.length && /^>\s?/.test(lines[i])) buf.push(lines[i++].replace(/^>\s?/, ''));
-      out.push(`<blockquote>${buf.map(inline).join('<br>')}</blockquote>`); continue;
-    }
-    if (/^\s*([-*+]|\d+[.)])\s+/.test(l)) {
-      const ordered = /^\s*\d/.test(l);
-      const buf = [];
-      while (i < lines.length && /^\s*([-*+]|\d+[.)])\s+/.test(lines[i])) {
-        buf.push(lines[i++].replace(/^\s*([-*+]|\d+[.)])\s+/, '').replace(/^\[( |x)\]\s*/i, (m0, c) => c.trim() ? '☑️ ' : '⬜ '));
-      }
-      const tag = ordered ? 'ol' : 'ul';
-      out.push(`<${tag}>${buf.map((b) => `<li>${inline(b)}</li>`).join('')}</${tag}>`); continue;
-    }
-    if (!l.trim()) { i++; continue; }
-    const buf = [];
-    while (i < lines.length && lines[i].trim() && !/^(#{1,4}\s|```|>|\s*([-*+]|\d+[.)])\s|\s*\|)/.test(lines[i])) buf.push(lines[i++]);
-    if (!buf.length) buf.push(lines[i++]);
-    out.push(`<p>${buf.map(inline).join('<br>')}</p>`);
-  }
-  return out.join('\n');
-}
 
 connect();

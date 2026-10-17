@@ -13,6 +13,11 @@ export const STATE_DIR = path.join(WS, 'state');
 export const LOGS = path.join(WS, 'logs');
 export const EVENTS_FILE = path.join(STATE_DIR, 'events.jsonl');
 export const BRAND_FILE = path.join(WS, 'brand.md');
+export const ASSETS = path.join(WS, 'assets');
+export const ASSET_FILES = path.join(ASSETS, 'files');
+export const ASSET_INDEX = path.join(ASSETS, 'index.json');
+export const PUBLISH = path.join(WS, 'publish');
+export const VIDEO_DIR = path.join(ROOT, 'video');
 
 export const AGENTS = {
   manager:      { name: 'Claude',  role: 'Trưởng nhóm' },
@@ -20,13 +25,15 @@ export const AGENTS = {
   'chien-luoc': { name: 'Minh',    role: 'Chiến lược Content & SEO' },
   copywriter:   { name: 'Vy',      role: 'Copywriter' },
   designer:     { name: 'Khoa',    role: 'Designer' },
+  editor:       { name: 'Tâm',     role: 'Video Editor (Remotion)' },
+  'phan-tich':  { name: 'An',      role: 'Phân tích Ads (Meta)' },
 };
 
-export const AGENT_STATES = ['idle', 'receiving', 'working', 'consulting', 'reviewing', 'delivering', 'done', 'error'];
+export const AGENT_STATES = ['idle', 'receiving', 'working', 'consulting', 'reviewing', 'rendering', 'publishing', 'delivering', 'done', 'error'];
 export const TASK_STATUSES = ['queued', 'in_progress', 'done', 'error'];
 
 export function ensureDirs() {
-  for (const d of [INBOX, OUTPUTS, STATE_DIR, LOGS]) fs.mkdirSync(d, { recursive: true });
+  for (const d of [INBOX, OUTPUTS, STATE_DIR, LOGS, ASSET_FILES, PUBLISH]) fs.mkdirSync(d, { recursive: true });
 }
 
 export function appendEvent(ev) {
@@ -84,7 +91,7 @@ export function agentStates(events = readEvents()) {
   for (const id of Object.keys(AGENTS)) agents[id] = { id, ...AGENTS[id], state: 'idle', msg: '', task: null, ts: null };
   for (const ev of events) {
     if (!agents[ev.agent]) continue;
-    Object.assign(agents[ev.agent], { state: ev.state, msg: ev.msg || '', task: ev.task || null, to: ev.to || null, ts: ev.ts });
+    Object.assign(agents[ev.agent], { state: ev.state, msg: ev.msg || '', task: ev.task || null, to: ev.to || null, progress: ev.progress ?? null, ts: ev.ts });
   }
   return agents;
 }
@@ -97,4 +104,19 @@ export function newTaskId() {
   const d = new Date();
   const p = (n) => String(n).padStart(2, '0');
   return `t${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-${Math.random().toString(36).slice(2, 5)}`;
+}
+
+export function writeJson(file, data) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+  fs.renameSync(tmp, file);
+}
+
+export function readJson(file, fallback) {
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
+}
+
+export function listAssets() {
+  return readJson(ASSET_INDEX, []);
 }
