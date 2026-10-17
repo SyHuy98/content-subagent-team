@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Văn phòng Content Spa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="logo">🌿</span>
+      <div>
+        <h1>Văn phòng Content Spa</h1>
+        <p>Team 4 chuyên gia AI + Trưởng nhóm Claude</p>
+      </div>
+    </div>
+    <div class="runner" id="runner">
+      <span class="dot"></span><span id="runnerText">Đang kết nối…</span>
+      <label class="switch" title="Tự động chạy team khi giao việc"><input type="checkbox" id="autoRun"><span>Tự chạy</span></label>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="office-col">
+      <div class="office-frame">
+        <div class="office" id="office">
+          <canvas id="canvas"></canvas>
+          <div class="overlay" id="overlay"></div>
+        </div>
+      </div>
+      <div class="team" id="team"></div>
+      <div class="card log-card">
+        <div class="card-head"><h2>Nhật ký hoạt động</h2><span class="muted" id="logCount"></span></div>
+        <ol class="log" id="log"></ol>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <nav class="tabs" role="tablist">
+        <button class="tab active" data-tab="assign">📝 Giao việc</button>
+        <button class="tab" data-tab="tasks">📋 Công việc <span class="badge" id="taskBadge"></span></button>
+        <button class="tab" data-tab="reports">📄 Báo cáo</button>
+        <button class="tab" data-tab="brand">🏷️ Hồ sơ Spa</button>
+      </nav>
+
+      <div class="tab-body active" id="tab-assign">
+        <p class="hint">Giao việc cho team. <b>Claude (Trưởng nhóm)</b> sẽ phân công cho 4 thành viên, tổng hợp kết quả rồi mang báo cáo tới bàn của bạn.</p>
+        <div class="presets" id="presets"></div>
+        <form id="taskForm" class="form">
+          <label>Tiêu đề công việc *
+            <input name="title" required maxlength="140" placeholder="VD: Chiến dịch 20/11 – combo chăm sóc da tri ân">
+          </label>
+          <div class="row">
+            <label>Loại content
+              <select name="type">
+                <option>Chiến dịch trọn gói</option>
+                <option>Bài đăng mạng xã hội</option>
+                <option>Quảng cáo Meta (Facebook/Instagram)</option>
+                <option>Bài blog chuẩn SEO</option>
+                <option>Kịch bản tin nhắn / Zalo OA</option>
+                <option>Lịch content tháng</option>
+              </select>
+            </label>
+            <label>Dịch vụ
+              <input name="service" placeholder="VD: Trị mụn chuẩn y khoa">
+            </label>
+          </div>
+          <fieldset>
+            <legend>Kênh đăng</legend>
+            <div class="chips" id="channels">
+              <label><input type="checkbox" value="Facebook" checked><span>Facebook</span></label>
+              <label><input type="checkbox" value="Instagram" checked><span>Instagram</span></label>
+              <label><input type="checkbox" value="TikTok"><span>TikTok</span></label>
+              <label><input type="checkbox" value="Zalo OA"><span>Zalo OA</span></label>
+              <label><input type="checkbox" value="Website/Blog"><span>Website/Blog</span></label>
+              <label><input type="checkbox" value="Google Maps"><span>Google Maps</span></label>
+            </div>
+          </fieldset>
+          <div class="row">
+            <label>Số lượng
+              <input name="quantity" placeholder="VD: 3 bài + 2 quảng cáo">
+            </label>
+            <label>Hạn chót
+              <input name="deadline" type="date">
+            </label>
+          </div>
+          <label>Brief chi tiết
+            <textarea name="brief" rows="5" placeholder="Mục tiêu, ưu đãi, khách hàng mục tiêu, giọng văn, điều cần tránh…"></textarea>
+          </label>
+          <button class="btn primary" type="submit">🚀 Giao việc cho team</button>
+        </form>
+        <div class="notice" id="assignNotice" hidden></div>
+      </div>
+
+      <div class="tab-body" id="tab-tasks">
+        <ul class="tasks" id="tasks"></ul>
+      </div>
+
+      <div class="tab-body" id="tab-reports">
+        <div class="report-head">
+          <select id="reportTask"></select>
+        </div>
+        <div class="file-tabs" id="fileTabs"></div>
+        <div class="report-actions" id="reportActions" hidden>
+          <button class="btn small" id="copyReport">📋 Copy</button>
+          <button class="btn small" id="downloadReport">⬇️ Tải .md</button>
+        </div>
+        <article class="md" id="report"><p class="muted">Chưa có báo cáo. Hãy giao việc cho team trước nhé!</p></article>
+      </div>
+
+      <div class="tab-body" id="tab-brand">
+        <p class="hint">Cả team đọc hồ sơ này trước mỗi công việc. Điền càng chi tiết, content càng đúng chất spa của bạn.</p>
+        <textarea id="brand" class="brand-editor" spellcheck="false"></textarea>
+        <button class="btn primary" id="saveBrand">💾 Lưu hồ sơ</button>
+        <span class="muted" id="brandSaved"></span>
+      </div>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/status.mjs:*)",
+      "Bash(node scripts/task.mjs:*)",
+      "Bash(mkdir -p workspace/outputs/:*)",
+      "Read(./**)",
+      "Write(./workspace/**)",
+      "Edit(./workspace/**)"
+    ]
+  },
+  "hooks": {
+    "SubagentStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook.mjs\"" }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook.mjs\"" }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+workspace/state/*
+workspace/logs/*
+workspace/inbox/*
+workspace/outputs/*
+!workspace/**/.gitkeep
+.claude/settings.local.json
