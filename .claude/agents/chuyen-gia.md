@@ -40,7 +40,7 @@ Trưởng nhóm sẽ đưa bạn task id (ví dụ `t20261017-...`) và cho bi�
    - Quy trình liệu trình và hướng dẫn chăm sóc sau
    - Từ được dùng / từ cấm dùng cho chủ đề này
    - 5–8 câu hỏi thường gặp (FAQ) kèm câu trả lời chuẩn
-4. **Vòng duyệt:** đọc bài của copywriter (và brief designer nếu có), báo
+4. **Vòng duyệt:** đọc bài của copywriter, kể cả mục `## Kịch bản video` nếu có. Đọc thêm brief/ảnh của designer, và `6-editor.md` + `video/props.json` của Tâm nếu đã có video: chữ trên màn hình và phụ đề cũng phải tuân thủ. Báo
    `node scripts/status.mjs chuyen-gia reviewing "Đang duyệt bài của Vy" --task <id>`,
    rồi ghi `workspace/outputs/<id>/5-duyet.md`: bảng từng câu có vấn đề, mức 🔴/🟡/🟢, lý do, câu đề xuất thay thế. Cuối file kết luận **DUYỆT** hoặc **CẦN SỬA**.
 5. Khi cần hỏi đồng đội, ví dụ để thống nhất góc tiếp cận với Minh, báo:

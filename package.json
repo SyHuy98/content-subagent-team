@@ -1,13 +1,17 @@
 {
   "name": "content-subagent-team",
   "version": "1.0.0",
-  "description": "Team 4 sub agent Claude Code làm content cho spa & thẩm mỹ viện, kèm văn phòng pixel 2D để giao việc và theo dõi.",
+  "description": "Team 6 sub agent Claude Code làm content cho spa & thẩm mỹ viện (viết bài, thiết kế, dựng video Remotion, phân tích Ads), kèm văn phòng pixel 2D để giao việc và theo dõi.",
   "type": "module",
   "private": true,
-  "engines": { "node": ">=18.17" },
+  "engines": {
+    "node": ">=18.17"
+  },
   "scripts": {
     "start": "node office/server.mjs",
     "demo": "node scripts/demo.mjs",
+    "setup-video": "npm install --prefix video --no-audit --no-fund",
+    "video:studio": "npm run studio --prefix video",
     "status": "node scripts/status.mjs",
     "tasks": "node scripts/task.mjs list"
   }

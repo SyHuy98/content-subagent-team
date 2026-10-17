@@ -3,24 +3,36 @@
     "allow": [
       "Bash(node scripts/status.mjs:*)",
       "Bash(node scripts/task.mjs:*)",
+      "Bash(node scripts/assets.mjs:*)",
+      "Bash(node scripts/config.mjs show:*)",
+      "Bash(node scripts/render-video.mjs:*)",
+      "Bash(node scripts/fetch-file.mjs:*)",
       "Bash(mkdir -p workspace/outputs/:*)",
       "Read(./**)",
       "Write(./workspace/**)",
-      "Edit(./workspace/**)"
+      "Edit(./workspace/**)",
+      "Write(./video/src/custom/**)",
+      "Edit(./video/src/custom/**)"
     ]
   },
   "hooks": {
     "SubagentStart": [
       {
         "hooks": [
-          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook.mjs\"" }
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook.mjs\""
+          }
         ]
       }
     ],
     "SubagentStop": [
       {
         "hooks": [
-          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook.mjs\"" }
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook.mjs\""
+          }
         ]
       }
     ]
