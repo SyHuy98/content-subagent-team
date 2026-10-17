@@ -9,6 +9,8 @@ Dự án này là một team gồm 4 sub agent của Claude Code chuyên làm co
 - `copywriter` (Vy): viết bài, quảng cáo, tin nhắn.
 - `designer` (Khoa): brief hình ảnh, bố cục, prompt AI.
 
+Model: Trưởng nhóm chạy `claude-opus-5-5` (effort high, khai báo trong frontmatter của `team.md`); 4 sub agent chạy `claude-sonnet-5-5` (effort high, khai báo trong frontmatter của từng agent).
+
 ## Quy ước
 - Task nằm ở `workspace/inbox/<id>.json`. Đọc bằng `node scripts/task.mjs show <id>`.
 - Hồ sơ thương hiệu nằm ở `workspace/brand.md`. Mọi agent đều đọc file này trước khi làm việc.

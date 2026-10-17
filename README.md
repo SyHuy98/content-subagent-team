@@ -16,6 +16,12 @@ Một **team AI làm content cho spa và thẩm mỹ viện**, chạy bằng cá
 
 **Quy trình:** Sếp giao việc → Claude nhận việc → **Vòng 1** (Linh và Minh làm song song) → **Vòng 2** (Vy và Khoa làm song song) → **Vòng 3** (Linh duyệt, Vy sửa nếu cần) → Claude tổng hợp và báo cáo Sếp.
 
+### 🧠 Model của team
+- **Claude (Trưởng nhóm):** `claude-opus-5-5`, mức suy luận `high`. Cấu hình trong `.claude/commands/team.md` và trong server khi tự chạy.
+- **4 thành viên:** `claude-sonnet-5-5`, mức suy luận `high`. Cấu hình bằng dòng `model:` / `effort:` trong từng file `.claude/agents/*.md`.
+
+Muốn đổi model thì sửa các dòng trên. Biến môi trường `CLAUDE_CODE_SUBAGENT_MODEL`, nếu được đặt, sẽ ghi đè model của sub agent.
+
 ## 🚀 Cài đặt và chạy
 
 Bạn cần **Node.js 18.17+** và **[Claude Code](https://claude.com/claude-code)** đã đăng nhập.
@@ -78,7 +84,8 @@ workspace/
 |---|---|
 | `PORT=3000` | Cổng web |
 | `AUTO_RUN=0/1` | Tắt/bật tự chạy team khi giao việc (mặc định bật nếu tìm thấy `claude`) |
-| `CLAUDE_MODEL=…` | Chọn model cho lượt chạy tự động |
+| `CLAUDE_MODEL=…` | Model của Trưởng nhóm khi tự chạy (mặc định `claude-opus-5-5`) |
+| `CLAUDE_EFFORT=…` | Mức suy luận của Trưởng nhóm khi tự chạy (mặc định `high`) |
 | `CLAUDE_BIN=…` | Đường dẫn tới lệnh `claude` |
 
 ## ❓ Gặp sự cố

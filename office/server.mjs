@@ -37,7 +37,7 @@ function pump() {
   // Truyền quyền trực tiếp: ở chế độ headless, Claude Code bỏ qua permissions trong
   // .claude/settings.json nếu thư mục chưa từng được "trust" trong phiên tương tác.
   const args = ['-p', `/team ${id}`, '--permission-mode', 'acceptEdits'];
-  if (process.env.CLAUDE_MODEL) args.push('--model', process.env.CLAUDE_MODEL);
+  args.push('--model', process.env.CLAUDE_MODEL || 'claude-opus-5-5', '--effort', process.env.CLAUDE_EFFORT || 'high');
   const abs = (f) => path.join(ROOT, 'scripts', f);
   args.push('--allowedTools',
     'Bash(node scripts/status.mjs:*)', 'Bash(node scripts/task.mjs:*)',
